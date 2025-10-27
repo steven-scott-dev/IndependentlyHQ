@@ -2,61 +2,79 @@ import { NextResponse } from 'next/server';
 
 export async function POST(request: Request) {
   try {
-    const analysis = await request.json(); // Fixed variable name
+    const analysis = await request.json();
 
-    // Create a more structured text file
-    const pdfContent = `
-INDEPENDENTLY - CAREER ROADMAP
+    const reportContent = `
+╔════════════════════════════════════════════════════════════════╗
+║                   INDEPENDENTLY - CAREER ROADMAP              ║
+║                    Your Path to Career Growth                 ║
+╚════════════════════════════════════════════════════════════════╝
+
 Generated on: ${new Date().toLocaleDateString()}
-==================================================
+---------------------------------------------------------------------------
 
-YOUR HIDDEN CAREER MATCHES:
+🎯 HIDDEN CAREER MATCHES
+---------------------------------------------------------------------------
 ${analysis.hiddenCareers?.map((career: any, index: number) => `
-${index + 1}. ${career.title}
-   • Why You're Qualified: ${career.matchReason}
-   • Salary Range: ${career.salaryRange}
-   • Transition Difficulty: ${career.transitionDifficulty}
+${index + 1}. ${career.title.toUpperCase()}
+   📍 Why You're Qualified: ${career.matchReason}
+   💰 Salary Range: ${career.salaryRange}
+   🚦 Transition: ${career.transitionDifficulty.toUpperCase()}
 `).join('\n')}
 
-PRIORITY SKILL GAPS TO ADDRESS:
+📚 PRIORITY SKILL GAPS
+---------------------------------------------------------------------------
 ${analysis.skillGaps?.map((skill: any, index: number) => `
-${index + 1}. ${skill.skill} (${skill.priority.toUpperCase()} PRIORITY)
-   • Importance: ${skill.reason}
-   • Recommended Resources: ${skill.resources?.join(', ')}
+${index + 1}. ${skill.skill}
+   ⚠️  Priority: ${skill.priority.toUpperCase()}
+   📖 Reason: ${skill.reason}
+   🔗 Resources: ${skill.resources?.join(', ')}
 `).join('\n')}
 
-YOUR 90-DAY ACTION PLAN:
-• WEEKS 1-4: ${analysis.actionPlan?.weeks1To4}
-• WEEKS 5-8: ${analysis.actionPlan?.weeks5To8} 
-• WEEKS 9-12: ${analysis.actionPlan?.weeks9To12}
+🗓️  90-DAY ACTION PLAN
+---------------------------------------------------------------------------
+📍 WEEKS 1-4: ${analysis.actionPlan?.weeks1To4}
 
-SALARY PROJECTIONS:
-• Current Estimated Salary: $${analysis.salaryProjections?.current?.toLocaleString()}
-• Potential in 90 Days: $${analysis.salaryProjections?.in90Days?.toLocaleString()}
-• Potential in 1 Year: $${analysis.salaryProjections?.in1Year?.toLocaleString()}
+📍 WEEKS 5-8: ${analysis.actionPlan?.weeks5To8}
 
-HIGH-ROI CERTIFICATIONS:
+📍 WEEKS 9-12: ${analysis.actionPlan?.weeks9To12}
+
+💰 SALARY PROJECTIONS
+---------------------------------------------------------------------------
+• Current: $${analysis.salaryProjections?.current?.toLocaleString()}
+• 90-Day Goal: $${analysis.salaryProjections?.in90Days?.toLocaleString()}
+• 1-Year Goal: $${analysis.salaryProjections?.in1Year?.toLocaleString()}
+
+🏆 HIGH-ROI CERTIFICATIONS
+---------------------------------------------------------------------------
 ${analysis.certifications?.map((cert: any, index: number) => `
 ${index + 1}. ${cert.name}
-   • Cost: $${cert.cost}
-   • Duration: ${cert.duration}
-   • ROI: ${cert.roi.toUpperCase()}
-   • Potential Salary Impact: +$${cert.salaryImpact?.toLocaleString()}
+   💵 Cost: $${cert.cost}
+   ⏱️  Duration: ${cert.duration}
+   📈 ROI: ${cert.roi.toUpperCase()}
+   💰 Salary Impact: +$${cert.salaryImpact?.toLocaleString()}
 `).join('\n')}
 
----
-Thank you for using Independently!
-Re-run your analysis anytime at: https://independently-hq.vercel.app/dashboard
+---------------------------------------------------------------------------
+💡 NEXT STEPS
+1. Review your hidden career matches and identify 1-2 that interest you
+2. Focus on the high-priority skill gaps first
+3. Follow the 90-day action plan week by week
+4. Consider the recommended certifications for long-term growth
+5. Re-run this analysis in 3 months to track your progress
+
+---------------------------------------------------------------------------
+Thank you for choosing Independently!
+Re-run your analysis anytime: https://independently-hq.vercel.app/dashboard
+
+"Take control of your career growth - one step at a time."
     `.trim();
 
-    // Convert to buffer for proper file download
-    const buffer = Buffer.from(pdfContent, 'utf-8');
-
-    return new Response(buffer, {
+    // Return as simple response
+    return new Response(reportContent, {
       headers: {
-        'Content-Type': 'text/plain',
-        'Content-Disposition': 'attachment; filename="career-roadmap.txt"',
-        'Content-Length': buffer.length.toString(),
+        'Content-Type': 'application/pdf',
+        'Content-Disposition': 'attachment; filename="career-roadmap.pdf"',
       },
     });
 
