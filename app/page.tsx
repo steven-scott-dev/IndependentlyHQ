@@ -44,22 +44,11 @@ export default function Home() {
   const [resume, setResume] = useState('')
   const [goals, setGoals] = useState('')
   const [loading, setLoading] = useState(false)
-  const [result, setResult] = useState<CareerAnalysis | null>(null) // Add the type here
+  const [result, setResult] = useState<CareerAnalysis | null>(null)
 
   const analyzeCareer = async () => {
-    setLoading(true)
-    try {
-      const response = await fetch('/api/analyze', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ resume, goals })
-      })
-      const data = await response.json()
-      setResult(data)
-    } catch (error) {
-      console.error('Analysis failed:', error)
-    }
-    setLoading(false)
+    // Redirect to Gumroad for payment
+    window.location.href = "https://scottify38.gumroad.com/l/zbwlzgz"
   }
 
   return (
@@ -122,7 +111,7 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Results */}
+        {/* Results - This section will show after payment */}
         {result && (
           <div className="bg-white rounded-2xl shadow-xl p-6 sm:p-8 border border-gray-100">
             <h2 className="text-2xl font-bold text-gray-900 mb-6">Your Career Roadmap</h2>
