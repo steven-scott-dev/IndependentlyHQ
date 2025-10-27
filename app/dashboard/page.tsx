@@ -1,6 +1,20 @@
 'use client'
 import { useState } from 'react'
 
+interface MarketInsights {
+  skills: Array<{
+    skill: string;
+    totalJobs: number;
+    averageSalary: number;
+    location: string;
+  }>;
+  summary: {
+    totalJobs: number;
+    hottestSkill: { skill: string; totalJobs: number };
+    highestPaying: { skill: string; averageSalary: number };
+  };
+}
+
 interface AnalysisResult {
   hiddenCareers: Array<{
     title: string
@@ -33,11 +47,16 @@ interface AnalysisResult {
   }>
 }
 
+interface EnhancedAnalysisResult extends AnalysisResult {
+  marketInsights: MarketInsights;
+  generatedAt: string;
+}
+
 export default function Dashboard() {
   const [resume, setResume] = useState('')
   const [goals, setGoals] = useState('')
   const [isProcessing, setIsProcessing] = useState(false)
-  const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null)
+  const [analysisResult, setAnalysisResult] = useState<EnhancedAnalysisResult | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   const analyzeCareer = async () => {
@@ -275,6 +294,76 @@ PROJECTS:
 
               {/* Preview of Results */}
               <div className="border-t pt-8 space-y-8">
+                {/* Market Insights Section */}
+                {analysisResult.marketInsights && (
+                  <div className="bg-gradient-to-r from-purple-50 to-blue-50 p-6 rounded-xl border border-purple-200">
+                    <h3 className="text-xl font-bold text-[#1F2937] mb-4 flex items-center">
+                      <span className="mr-2">📊</span>
+                      Live Market Validation
+                    </h3>
+                    <p className="text-gray-600 mb-6">
+                      Real job market data validating your career path (Updated {new Date(analysisResult.generatedAt).toLocaleDateString()})
+                    </p>
+                    
+                    {/* Market Summary */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                      <div className="bg-white p-4 rounded-lg border text-center">
+                        <div className="text-2xl font-bold text-purple-600">
+                          {analysisResult.marketInsights.summary.totalJobs.toLocaleString()}
+                        </div>
+                        <div className="text-sm text-gray-600">Total Jobs Available</div>
+                      </div>
+                      
+                      <div className="bg-white p-4 rounded-lg border text-center">
+                        <div className="text-lg font-bold text-green-600">
+                          {analysisResult.marketInsights.summary.hottestSkill.skill}
+                        </div>
+                        <div className="text-sm text-gray-600">Hottest Skill</div>
+                        <div className="text-xs text-green-600">
+                          {analysisResult.marketInsights.summary.hottestSkill.totalJobs.toLocaleString()} jobs
+                        </div>
+                      </div>
+                      
+                      <div className="bg-white p-4 rounded-lg border text-center">
+                        <div className="text-lg font-bold text-blue-600">
+                          ${analysisResult.marketInsights.summary.highestPaying.averageSalary.toLocaleString()}
+                        </div>
+                        <div className="text-sm text-gray-600">Highest Paying Skill</div>
+                        <div className="text-xs text-blue-600">
+                          {analysisResult.marketInsights.summary.highestPaying.skill}
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {/* Skills Breakdown */}
+                    <div className="grid gap-3">
+                      <h4 className="font-semibold text-gray-800">Skills Demand Breakdown:</h4>
+                      {analysisResult.marketInsights.skills.map((skillData, index) => (
+                        <div key={index} className="flex items-center justify-between p-3 bg-white rounded-lg border">
+                          <div className="flex items-center space-x-3">
+                            <span className="font-medium text-gray-700">{skillData.skill}</span>
+                            <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
+                              {skillData.location}
+                            </span>
+                          </div>
+                          <div className="text-right">
+                            <div className="font-semibold text-gray-900">
+                              {skillData.totalJobs.toLocaleString()} jobs
+                            </div>
+                            <div className="text-sm text-green-600">
+                              ${skillData.averageSalary.toLocaleString()}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    
+                    <div className="mt-4 text-xs text-gray-500 text-center">
+                      Data sourced from Adzuna • Updates daily
+                    </div>
+                  </div>
+                )}
+
                 {/* Hidden Careers */}
                 <div>
                   <h3 className="text-xl font-bold text-[#1F2937] mb-4 flex items-center">
