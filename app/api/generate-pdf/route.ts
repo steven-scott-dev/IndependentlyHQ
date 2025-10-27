@@ -1,88 +1,79 @@
-import { NextResponse } from 'next/server';
+import { NextResponse } from 'next/server'
+import { PDFDocument, StandardFonts, rgb } from 'pdf-lib'
 
 export async function POST(request: Request) {
   try {
-    const analysis = await request.json();
+    const analysis = await request.json()
 
-    const reportContent = `
-╔════════════════════════════════════════════════════════════════╗
-║                   INDEPENDENTLY - CAREER ROADMAP              ║
-║                    Your Path to Career Growth                 ║
-╚════════════════════════════════════════════════════════════════╝
+    const pdfDoc = await PDFDocument.create()
+    const page = pdfDoc.addPage([612, 792])
+    const { height } = page.getSize()
 
-Generated on: ${new Date().toLocaleDateString()}
----------------------------------------------------------------------------
+    const font = await pdfDoc.embedFont(StandardFonts.Helvetica)
+    const fontSize = 12
+    let cursorY = height - 50
 
-🎯 HIDDEN CAREER MATCHES
----------------------------------------------------------------------------
-${analysis.hiddenCareers?.map((career: any, index: number) => `
-${index + 1}. ${career.title.toUpperCase()}
-   📍 Why You're Qualified: ${career.matchReason}
-   💰 Salary Range: ${career.salaryRange}
-   🚦 Transition: ${career.transitionDifficulty.toUpperCase()}
-`).join('\n')}
+    const writeLine = (text: string, offset = 18) => {
+      page.drawText(text, { x: 50, y: cursorY, size: fontSize, font, color: rgb(0, 0, 0) })
+      cursorY -= offset
+    }
 
-📚 PRIORITY SKILL GAPS
----------------------------------------------------------------------------
-${analysis.skillGaps?.map((skill: any, index: number) => `
-${index + 1}. ${skill.skill}
-   ⚠️  Priority: ${skill.priority.toUpperCase()}
-   📖 Reason: ${skill.reason}
-   🔗 Resources: ${skill.resources?.join(', ')}
-`).join('\n')}
+    writeLine('INDEPENDENTLY - CAREER ROADMAP', 24)
+    writeLine('================================', 24)
 
-🗓️  90-DAY ACTION PLAN
----------------------------------------------------------------------------
-📍 WEEKS 1-4: ${analysis.actionPlan?.weeks1To4}
+    // Hidden Careers
+    writeLine('YOUR HIDDEN CAREER MATCHES:', 18)
+    analysis.hiddenCareers?.forEach((c: any, i: number) => {
+      writeLine(`${i + 1}. ${c.title}`)
+      writeLine(`   Why You're Qualified: ${c.matchReason}`)
+      writeLine(`   Salary Range: ${c.salaryRange}`)
+      writeLine(`   Transition Difficulty: ${c.transitionDifficulty}`, 24)
+    })
 
-📍 WEEKS 5-8: ${analysis.actionPlan?.weeks5To8}
+    // Skill Gaps
+    writeLine('PRIORITY SKILL GAPS:', 18)
+    analysis.skillGaps?.forEach((s: any, i: number) => {
+      writeLine(`${i + 1}. ${s.skill} (${s.priority} priority)`)
+      writeLine(`   Importance: ${s.reason}`)
+      writeLine(`   Resources: ${s.resources?.join(', ')}`, 24)
+    })
 
-📍 WEEKS 9-12: ${analysis.actionPlan?.weeks9To12}
+    // Action Plan
+    writeLine('90-DAY ACTION PLAN:', 18)
+    writeLine(`Weeks 1-4: ${analysis.actionPlan?.weeks1To4}`)
+    writeLine(`Weeks 5-8: ${analysis.actionPlan?.weeks5To8}`)
+    writeLine(`Weeks 9-12: ${analysis.actionPlan?.weeks9To12}`, 24)
 
-💰 SALARY PROJECTIONS
----------------------------------------------------------------------------
-• Current: $${analysis.salaryProjections?.current?.toLocaleString()}
-• 90-Day Goal: $${analysis.salaryProjections?.in90Days?.toLocaleString()}
-• 1-Year Goal: $${analysis.salaryProjections?.in1Year?.toLocaleString()}
+    // Salary Projections
+    writeLine('SALARY PROJECTIONS:', 18)
+    writeLine(`Current: $${analysis.salaryProjections?.current?.toLocaleString()}`)
+    writeLine(`In 90 Days: $${analysis.salaryProjections?.in90Days?.toLocaleString()}`)
+    writeLine(`In 1 Year: $${analysis.salaryProjections?.in1Year?.toLocaleString()}`, 24)
 
-🏆 HIGH-ROI CERTIFICATIONS
----------------------------------------------------------------------------
-${analysis.certifications?.map((cert: any, index: number) => `
-${index + 1}. ${cert.name}
-   💵 Cost: $${cert.cost}
-   ⏱️  Duration: ${cert.duration}
-   📈 ROI: ${cert.roi.toUpperCase()}
-   💰 Salary Impact: +$${cert.salaryImpact?.toLocaleString()}
-`).join('\n')}
+    // Certifications
+    writeLine('CERTIFICATIONS:', 18)
+    analysis.certifications?.forEach((cert: any, i: number) => {
+      writeLine(`${i + 1}. ${cert.name}`)
+      writeLine(`   Cost: $${cert.cost} | Duration: ${cert.duration}`)
+      writeLine(`   ROI: ${cert.roi} | Salary Impact: +$${cert.salaryImpact?.toLocaleString()}`, 24)
+    })
 
----------------------------------------------------------------------------
-💡 NEXT STEPS
-1. Review your hidden career matches and identify 1-2 that interest you
-2. Focus on the high-priority skill gaps first
-3. Follow the 90-day action plan week by week
-4. Consider the recommended certifications for long-term growth
-5. Re-run this analysis in 3 months to track your progress
+    // Footer
+    writeLine(`Generated by Independently`, 24)
+    writeLine(`${new Date().toLocaleDateString()}`)
 
----------------------------------------------------------------------------
-Thank you for choosing Independently!
-Re-run your analysis anytime: https://independently-hq.vercel.app/dashboard
+    const pdfBytes = await pdfDoc.save()
+    const pdfBuffer = Buffer.from(pdfBytes)
 
-"Take control of your career growth - one step at a time."
-    `.trim();
-
-    // Return as simple response
-    return new Response(reportContent, {
+    return new NextResponse(pdfBuffer, {
       headers: {
         'Content-Type': 'application/pdf',
         'Content-Disposition': 'attachment; filename="career-roadmap.pdf"',
+        'Content-Length': pdfBuffer.length.toString(),
       },
-    });
-
+    })
   } catch (error) {
-    console.error('PDF generation error:', error);
-    return NextResponse.json(
-      { error: 'Failed to generate career roadmap' },
-      { status: 500 }
-    );
+    console.error('PDF generation failed:', error)
+    return NextResponse.json({ error: 'Failed to generate career roadmap' }, { status: 500 })
   }
 }
