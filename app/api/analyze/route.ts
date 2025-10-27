@@ -1,59 +1,85 @@
-import { NextResponse } from 'next/server'
-import OpenAI from 'openai'
+import { NextResponse } from 'next/server';
+import OpenAI from 'openai';
 
 const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-})
+  apiKey: process.env.OPENAI_API_KEY || '',
+});
 
 export async function POST(request: Request) {
-  const { resume, goals } = await request.json()
-
-  const prompt = `
-  Act as a senior career coach. Analyze this resume and career goals:
-
-  RESUME:
-  ${resume}
-
-  CAREER GOALS:
-  ${goals}
-
-  Provide a comprehensive career analysis in this EXACT JSON format:
-  {
-    "skillGaps": [
-      {"skill": "skill name", "priority": "high/medium/low", "demand": "percentage of target jobs"}
-    ],
-    "certifications": [
-      {"name": "cert name", "cost": 100, "duration": "3 months", "salaryImpact": 15000, "roi": "high/medium/low"}
-    ],
-    "learningRoadmap": {
-      "30Days": "specific actionable steps",
-      "60Days": "specific actionable steps", 
-      "90Days": "specific actionable steps"
-    },
-    "salaryProjection": {
-      "currentEstimate": 85000,
-      "potential90Days": 100000,
-      "potential1Year": 130000
-    },
-    "alternativePaths": [
-      {"role": "alternative role", "transitionDifficulty": "easy/medium/hard", "salaryRange": "100k-150k"}
-    ]
-  }
-
-  Make data realistic and actionable. Focus on high-ROI recommendations.
-  `
-
   try {
-    const completion = await openai.chat.completions.create({
-      messages: [{ role: "user", content: prompt }],
-      model: "gpt-4",
-      temperature: 0.7,
-    })
+    const { resume, goals } = await request.json();
 
-    const analysis = JSON.parse(completion.choices[0].message.content || '{}')
-    return NextResponse.json(analysis)
+    const prompt = `
+    Analyze this resume and career goals to create a comprehensive career roadmap.
+
+    RESUME:
+    ${resume}
+
+    CAREER GOALS:
+    ${goals}
+
+    Provide analysis in this EXACT JSON format:
+    {
+      "hiddenCareers": [
+        {
+          "title": "Job title",
+          "matchReason": "Why they're qualified",
+          "salaryRange": "$XX,XXX-$XX,XXX",
+          "transitionDifficulty": "easy/medium/hard"
+        }
+      ],
+      "skillGaps": [
+        {
+          "skill": "Skill name",
+          "priority": "high/medium/low",
+          "reason": "Why it's important",
+          "resources": ["Resource 1", "Resource 2"]
+        }
+      ],
+      "actionPlan": {
+        "weeks1To4": "Specific weekly tasks and learning objectives",
+        "weeks5To8": "Specific weekly tasks and learning objectives", 
+        "weeks9To12": "Specific weekly tasks and learning objectives"
+      },
+      "salaryProjections": {
+        "current": 85000,
+        "in90Days": 100000,
+        "in1Year": 130000
+      },
+      "certifications": [
+        {
+          "name": "Certification name",
+          "cost": 299,
+          "duration": "3 months",
+          "roi": "high/medium/low",
+          "salaryImpact": 15000
+        }
+      ]
+    }
+
+    Make recommendations realistic and actionable. Focus on high-ROI opportunities.
+    `;
+
+    const completion = await openai.chat.completions.create({
+      messages: [{ role: 'user', content: prompt }],
+      model: 'gpt-4',
+      temperature: 0.7,
+    });
+
+    const content = completion.choices[0]?.message?.content;
+    
+    if (!content) {
+      throw new Error('No response from AI');
+    }
+
+    const analysis = JSON.parse(content);
+    return NextResponse.json(analysis);
+
   } catch (error) {
-    console.error('OpenAI error:', error)
-    return NextResponse.json({ error: 'Analysis failed' }, { status: 500 })
+    console.error('Analysis error:', error);
+    return NextResponse.json(
+      { error: 'Failed to analyze career path' },
+      { status: 500 }
+    );
   }
 }
