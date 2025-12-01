@@ -1,6 +1,7 @@
-// apps/web/app/insights/page.tsx
+// apps/web/app/(site)/insights/page.tsx
 
 import type { Metadata } from "next";
+import { getSupabaseServer } from "../../../lib/supabaseServer";
 
 export const metadata: Metadata = {
   title: "Insights | Independently",
@@ -44,18 +45,8 @@ type WhoMatch = {
   reason?: string | null;
   match_score?: number | null;
   contact_type?: string | null;
-  who_to_know?: WhoPerson | null;
+  who_to_know?: WhoPerson;
 };
-
-async function fetchJSON<T>(path: string): Promise<T> {
-  const res = await fetch(path, { cache: "no-store" });
-
-  if (!res.ok) {
-    throw new Error(`Failed to fetch ${path}: ${res.status}`);
-  }
-
-  return res.json();
-}
 
 function formatDate(dateString?: string | null) {
   if (!dateString) return "";
@@ -69,16 +60,48 @@ function formatDate(dateString?: string | null) {
 }
 
 export default async function InsightsPage() {
-  // Hit your own API routes
+  const supabase = getSupabaseServer();
+
   const [newsRes, jobsRes, whoRes] = await Promise.all([
-    fetchJSON<{ items: NewsItem[] }>("/api/insights/news"),
-    fetchJSON<{ items: JobInsight[] }>("/api/insights/jobs"),
-    fetchJSON<{ items: WhoMatch[] }>("/api/insights/who-to-know"),
+    supabase
+      .from("news_items")
+      .select("*")
+      .order("relevance_score", { ascending: false })
+      .order("published_at", { ascending: false })
+      .limit(12),
+    supabase
+      .from("job_insights")
+      .select("*")
+      .order("relevance_score", { ascending: false })
+      .limit(8),
+    supabase
+      .from("who_to_know_matches")
+      .select(
+        `
+        id,
+        reason,
+        match_score,
+        contact_type,
+        who_to_know:who_to_know (
+          id,
+          full_name,
+          headline,
+          company,
+          role,
+          location,
+          linkedin_url,
+          website_url,
+          avatar_url
+        )
+      `
+      )
+      .order("match_score", { ascending: false })
+      .limit(12),
   ]);
 
-  const news = newsRes.items ?? [];
-  const jobs = jobsRes.items ?? [];
-  const who = whoRes.items ?? [];
+  const news = (newsRes.data as NewsItem[] | null) ?? [];
+  const jobs = (jobsRes.data as JobInsight[] | null) ?? [];
+  const who = (whoRes.data as unknown as WhoMatch[] | null) ?? [];
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8 space-y-8">
