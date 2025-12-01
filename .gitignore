@@ -1,0 +1,54 @@
+# Dependencies
+node_modules/
+**/node_modules/
+
+# Build output
+.next/
+out/
+dist/
+build/
+apps/web/.next/
+apps/worker/.next/
+
+# Environment variables
+.env
+.env.*
+*.env
+!env.example
+
+apps/web/.env
+apps/web/.env.*
+apps/web/*.env
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# OS / Editor junk
+.DS_Store
+Thumbs.db
+.vscode/
+*.swp
+
+# Supabase junk
+supabase/.branches/*
+supabase/.temp/*
+supabase/.cache/*
+.supabase/
+
+# TypeScript
+*.tsbuildinfo
+
+# PIDs
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Next.js cache
+.next/
+.cache/
+.vercel/
+turbo/

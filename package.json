@@ -1,0 +1,11 @@
+{
+  "name": "independently",
+  "private": true,
+  "workspaces": ["apps/*", "packages/*"],
+  "packageManager": "pnpm@9.0.0",
+  "scripts": {
+    "dev": "pnpm -C apps/web dev",
+    "dev:worker": "pnpm -C apps/worker dev",
+    "build": "pnpm -C apps/web build && pnpm -C apps/worker build"
+  }
+}
